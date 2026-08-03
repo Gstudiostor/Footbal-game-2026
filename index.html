@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Neon DLS 2.5D - Edição PvP & Menu</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #030308;
+            color: #00ffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            text-shadow: 0 0 8px #00ffff;
+        }
+
+        #aviso-paisagem {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #030308;
+            z-index: 9999;
+            color: #ff007f;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (orientation: portrait) {
+            #aviso-paisagem { display: flex; }
+        }
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            z-index: 10;
+            background: rgba(5, 5, 15, 0.85);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        #radar {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            width: 140px;
+            height: 70px;
+            background: rgba(5, 15, 25, 0.85);
+            border: 1.5px solid #00ffff;
+            border-radius: 8px;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        #viewport {
+            perspective: 700px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas#campo {
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+            border-radius: 12px;
+            transform: rotateX(32deg) scaleY(0.82);
+            transform-style: preserve-3d;
+        }
+
+        .controles-container {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100vw;
+            height: 150px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        #joystick-base {
+            width: 110px;
+            height: 110px;
+            background: rgba(0, 255, 255, 0.12);
+            border: 2px solid #00ffff;
+            border-radius: 50%;
+            position: relative;
+            pointer-events: auto;
+            box-shadow: 0 0 12px #00ffff;
+        }
+        #joystick-stick {
+            width: 45px;
+            height: 45px;
+            background: #00ffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 32.5px;
+            left: 32.5px;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .botoes-acao {
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        .btn-acao {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: rgba(255, 0, 127, 0.2);
+            border: 2px solid #ff007f;
+            color: #ff007f;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px #ff007f;
+        }
+        .btn-super {
+            background: rgba(180, 0, 255, 0.25);
+            border-color: #b400ff;
+            color: #b400ff;
+            box-shadow: 0 0 15px #b400ff;
+        }
+
+        /* Modais & Telas */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(3, 3, 8, 0.95);
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay h1 {
+            font-size: 32px;
+            margin-bottom: 5px;
+            color: #00ffff;
+            text-shadow: 0 0 15px #00ffff;
+        }
+        .modal-overlay h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #ff007f;
+        }
+
+        .btn-modal {
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #030308;
+            background: #00ffff;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 0 15px #00ffff;
+            cursor: pointer;
+            margin: 6px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .grid-loja {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .card-item {
+            border: 1px solid #00ffff;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(0, 255, 255, 0.05);
+            text-align: center;
+            width: 140px;
+        }
+
+        /* Tela Inicial */
+        #menu-inicial {
+            display: flex;
+            z-index: 1000;
+        }
+        .link-privacidade {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #ff007f;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="aviso-paisagem">🔄 Vire o celular para o Modo Paisagem</div>
+
+    <div id="menu-inicial" class="modal-overlay">
+        <h1>NEON DLS 2.5D</h1>
+        <h2>GSTUDIO GAMES</h2>
+        
+        <button class="btn-modal" onclick="iniciarPartida()">🎮 JOGAR</button>
+        <button class="btn-modal" style="background:#ff007f; color:#fff; box-shadow:0 0 15px #ff007f;" onclick="abrirLoja()">🛍️ LOJA DE SKINS</button>
+        <button class="btn-modal" style="background:#b400ff; color:#fff; box-shadow:0 0 15px #b400ff;" onclick="abrirConfiguracoes()">⚙️ CONFIGURAÇÕES</button>
+        
+        <a href="https://share.google/cmzJVyOHqz506rjWD" target="_blank" class="link-privacidade">📜 Política de Privacidade</a>
+    </div>
+
+    <div id="modal-config" class="modal-overlay">
+        <h1>CONFIGURAÇÕES</h1>
+        <div style="margin: 20px 0; font-size: 18px;">
+            EFEITOS DE SOM: 
+            <button id="btn-toggle-som" class="btn-modal" style="padding: 6px 16px; font-size: 12px;" onclick="toggleSom()">LIGADO 🔊</button>
+        </div>
+        <button class="btn-modal" onclick="fecharConfiguracoes()">VOLTAR AO MENU</button>
+    </div>
+
+    <div id="hud">
+        <span id="txt-rival" style="color: #ff007f;">VS NEON CITY</span> | 
+        <span id="placar-user" style="color: #00ffff;">VOCÊ 0</span> x <span id="placar-bot" style="color: #ff007f;">0 BOT</span> | 
+        ⏱️ <span id="tempo">90</span>s | 
+        🪙 <span id="moedas-hud" style="color:#ffff00;">0</span>
+    </div>
+
+    <canvas id="radar" width="140" height="70"></canvas>
+
+    <div id="viewport">
+        <canvas id="campo" width="900" height="450"></canvas>
+    </div>
+
+    <div class="controles-container">
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
+        </div>
+
+        <div class="botoes-acao">
+            <div class="btn-acao" id="btnPass">PASSE</div>
+            <div class="btn-acao" id="btnKick">CHUTE</div>
+            <div class="btn-acao btn-super" id="btnSuper">SUPER</div>
+        </div>
+    </div>
+
+    <div id="modal-fim" class="modal-overlay">
+        <h1 id="titulo-resultado">FIM DE JOGO</h1>
+        <h2 id="placar-resultado">VOCÊ 0 x 0 BOT</h2>
+        <div id="recompensa-txt" style="color:#ffff00; font-size: 18px; margin-bottom: 20px; font-weight:bold;">+0 Coins</div>
+        <div>
+            <button class="btn-modal" onclick="reiniciarJogo(true)">PRÓXIMA PARTIDA ⚽</button>
+            <button class="btn-modal" style="background:#ff007f; color:#fff; box-shadow:0 0 15px #ff007f;" onclick="abrirLoja()">LOJA 🛍️</button>
+            <button class="btn-modal" style="background:#b400ff; color:#fff; box-shadow:0 0 15px #b400ff;" onclick="voltarAoMenu()">MENU 🏠</button>
+        </div>
+    </div>
+
+    <div id="modal-loja" class="modal-overlay">
+        <h1>LOJA NEON</h1>
+        <h3 style="color:#ffff00; margin:0 0 10px 0;">SEUS COINS: <span id="loja-coins">0</span></h3>
+        
+        <div class="grid-loja">
+            <div class="card-item">
+                <div style="font-weight:bold; margin-bottom:5px;">Bola de Plasma</div>
+                <div style="color:#ffff00; font-size:13px; margin-bottom:10px;">100 Coins</div>
+                <button class="btn-modal" style="font-size:11px; padding:6px 12px;" onclick="comprarSkin('plasma', 100)">COMPRAR / EQUIPAR</button>
+            </div>
+            <div class="card-item">
+                <div style="font-weight:bold; margin-bottom:5px;">Bola de Fogo</div>
+                <div style="color:#ffff00; font-size:13px; margin-bottom:10px;">250 Coins</div>
+                <button class="btn-modal" style="font-size:11px; padding:6px 12px;" onclick="comprarSkin('fogo', 250)">COMPRAR / EQUIPAR</button>
+            </div>
+        </div>
+
+        <button class="btn-modal" onclick="fecharLoja()">VOLTAR</button>
+    </div>
+
+    <script>
+        // CONFIGURAÇÕES & SOM
+        let somAtivado = localStorage.getItem('neon_som') !== 'false';
+        
+        function toggleSom() {
+            somAtivado = !somAtivado;
+            localStorage.setItem('neon_som', somAtivado);
+            document.getElementById("btn-toggle-som").textContent = somAtivado ? "LIGADO 🔊" : "DESLIGADO 🔇";
+        }
+        document.getElementById("btn-toggle-som").textContent = somAtivado ? "LIGADO 🔊" : "DESLIGADO 🔇";
+
+        // ECONOMIA & CARREIRA
+        let moedas = parseInt(localStorage.getItem('neon_coins')) || 0;
+        let skinEquipada = localStorage.getItem('neon_skin') || 'padrao';
+        let skinsCompradas = JSON.parse(localStorage.getItem('neon_skins_list')) || ['padrao'];
+
+        const adversarios = [
+            { nome: "Neon City", cor: "#ff007f", vel: 3.5 },
+            { nome: "Cyber Scorpions", cor: "#ffaa00", vel: 3.8 },
+            { nome: "Laser Sharks", cor: "#00ff66", vel: 4.1 },
+            { nome: "Hyper Dragons", cor: "#b400ff", vel: 4.4 }
+        ];
+        let idxRival = 0;
+
+        function atualizarMoedasHUD() {
+            document.getElementById("moedas-hud").textContent = moedas;
+            document.getElementById("loja-coins").textContent = moedas;
+            localStorage.setItem('neon_coins', moedas);
+        }
+
+        // SINTETIZADOR DE ÁUDIO WEB
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function tocarSom(tipo) {
+            if (!somAtivado) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (tipo === 'chute') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            } else if (tipo === 'super') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (tipo === 'apito') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+            } else if (tipo === 'gol') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        const canvas = document.getElementById("campo");
+        const ctx = canvas.getContext("2d");
+        const canvasRadar = document.getElementById("radar");
+        const ctxRadar = canvasRadar.getContext("2d");
+
+        const MUNDO = { largura: 2200, altura: 1100 };
+        const camera = { x: 0, y: 0 };
+
+        let golsUser = 0;
+        let golsBot = 0;
+        let tempoRestante = 90;
+        let jogoAtivo = false;
+        let timerLoop = null;
+
+        const bola = { 
+            x: MUNDO.largura / 2, 
+            y: MUNDO.altura / 2, 
+            raio: 10, 
+            velX: 0, 
+            velY: 0, 
+            atrito: 0.98, 
+            cor: "#ffffff",
+            posse: null
+        };
+
+        const formacaoTime1 = [
+            { x: 100,  y: 550 },
+            { x: 350, y: 200 }, { x: 300, y: 450 }, { x: 300, y: 650 }, { x: 350, y: 900 },
+            { x: 700, y: 250 }, { x: 650, y: 550 }, { x: 700, y: 850 },
+            { x: 1000, y: 250 }, { x: 950, y: 550 }, { x: 1000, y: 850 }
+        ];
+
+        const formacaoTime2 = [
+            { x: 2100, y: 550 },
+            { x: 1850, y: 200 }, { x: 1900, y: 450 }, { x: 1900, y: 650 }, { x: 1850, y: 900 },
+            { x: 1500, y: 250 }, { x: 1550, y: 550 }, { x: 1500, y: 850 },
+            { x: 1200, y: 250 }, { x: 1250, y: 550 }, { x: 1200, y: 850 }
+        ];
+
+        let timeUser = formacaoTime1.map((pos, idx) => ({
+            id: 'user_' + idx, x: pos.x, y: pos.y, raio: 16, vel: 4.5, cor: "#00ffff", miraX: 1, miraY: 0
+        }));
+
+        let timeBot = formacaoTime2.map((pos, idx) => ({
+            id: 'bot_' + idx, x: pos.x, y: pos.y, raio: 16, vel: adversarios[0].vel, cor: adversarios[0].cor, miraX: -1, miraY: 0, cooldownChute: 0
+        }));
+
+        let jogadorControladoIdx = 9;
+
+        // Joystick Multitouch
+        const joystickBase = document.getElementById("joystick-base");
+        const joystickStick = document.getElementById("joystick-stick");
+        let joystickVector = { x: 0, y: 0 };
+        let joystickTouchId = null;
+
+        joystickBase.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            joystickTouchId = touch.identifier;
+            atualizarJoystick(touch.clientX, touch.clientY);
+        });
+
+        window.addEventListener("touchmove", (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === joystickTouchId) {
+                    atualizarJoystick(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+                }
+            }
+        });
+
+        function finalizarJoystick(e) {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === joystickTouchId) {
+                    joystickTouchId = null;
+                    joystickVector = { x: 0, y: 0 };
+                    joystickStick.style.transform = `translate(0px, 0px)`;
+                }
+            }
+        }
+
+        window.addEventListener("touchend", finalizarJoystick);
+        window.addEventListener("touchcancel", finalizarJoystick);
+
+        function atualizarJoystick(clientX, clientY) {
+            const rect = joystickBase.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let deltaX = clientX - centerX;
+            let deltaY = clientY - centerY;
+            let distance = Math.hypot(deltaX, deltaY);
+            const maxRadius = rect.width / 2;
+
+            if (distance > maxRadius) {
+                deltaX = (deltaX / distance) * maxRadius;
+                deltaY = (deltaY / distance) * maxRadius;
+            }
+
+            joystickStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            joystickVector.x = deltaX / maxRadius;
+            joystickVector.y = deltaY / maxRadius;
+        }
+
+        function vincularBotao(id, acao) {
+            const btn = document.getElementById(id);
+            btn.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                acao();
+            });
+        }
+
+        vincularBotao("btnPass", () => executarChute(11));
+        vincularBotao("btnKick", () => executarChute(18));
+        vincularBotao("btnSuper", () => executarChute(29, true));
+
+        function executarChute(forca, superChute = false) {
+            if (!jogoAtivo) return;
+            const p = timeUser[jogadorControladoIdx];
+            if (bola.posse === p.id || Math.hypot(p.x - bola.x, p.y - bola.y) < p.raio + bola.raio + 12) {
+                bola.posse = null;
+                bola.velX = p.miraX * forca;
+                bola.velY = p.miraY * forca;
+
+                if (superChute) {
+                    const corOriginal = bola.cor;
+                    bola.cor = "#b400ff";
+                    tocarSom('super');
+                    setTimeout(() => bola.cor = corOriginal, 1200);
+                } else {
+                    tocarSom('chute');
+                }
+            }
+        }
+
+        // CONTROLADORES DE TELAS
+        function iniciarPartida() {
+            document.getElementById("menu-inicial").style.display = "none";
+            reiniciarJogo(false);
+        }
+
+        function abrirConfiguracoes() { document.getElementById("modal-config").style.display = "flex"; }
+        function fecharConfiguracoes() { document.getElementById("modal-config").style.display = "none"; }
+        function abrirLoja() { document.getElementById("modal-loja").style.display = "flex"; }
+        function fecharLoja() { document.getElementById("modal-loja").style.display = "none"; }
+        function voltarAoMenu() {
+            document.getElementById("modal-fim").style.display = "none";
+            document.getElementById("menu-inicial").style.display = "flex";
+            jogoAtivo = false;
+            clearInterval(timerLoop);
+        }
+
+        function iniciarTimer() {
+            clearInterval(timerLoop);
+            timerLoop = setInterval(() => {
+                if (tempoRestante > 0 && jogoAtivo) {
+                    tempoRestante--;
+                    document.getElementById("tempo").textContent = tempoRestante;
+                } else if (jogoAtivo) {
+                    encerrarJogo();
+                }
+            }, 1000);
+        }
+
+        function encerrarJogo() {
+            jogoAtivo = false;
+            clearInterval(timerLoop);
+            tocarSom('apito');
+
+            let coinsGanhos = 0;
+            const modal = document.getElementById("modal-fim");
+            const titulo = document.getElementById("titulo-resultado");
+            const placar = document.getElementById("placar-resultado");
+
+            if (golsUser > golsBot) {
+                titulo.textContent = "VITÓRIA!";
+                titulo.style.color = "#00ffff";
+                coinsGanhos = 100;
+            } else if (golsBot > golsUser) {
+                titulo.textContent = "DERROTA!";
+                titulo.style.color = "#ff007f";
+                coinsGanhos = 0;
+            } else {
+                titulo.textContent = "EMPATE!";
+                titulo.style.color = "#ffff00";
+                coinsGanhos = 30;
+            }
+
+            moedas += coinsGanhos;
+            atualizarMoedasHUD();
+
+            document.getElementById("recompensa-txt").textContent = `+${coinsGanhos} Coins Ganhos!`;
+            placar.textContent = `VOCÊ ${golsUser} x ${golsBot} ${adversarios[idxRival].nome.toUpperCase()}`;
+            modal.style.display = "flex";
+        }
+
+        function reiniciarJogo(avancarRival = false) {
+            document.getElementById("modal-fim").style.display = "none";
+            
+            if (avancarRival && golsUser > golsBot) {
+                idxRival = (idxRival + 1) % adversarios.length;
+            }
+            
+            const rivalAtual = adversarios[idxRival];
+            document.getElementById("txt-rival").textContent = "VS " + rivalAtual.nome.toUpperCase();
+            document.getElementById("txt-rival").style.color = rivalAtual.cor;
+            timeBot.forEach(b => { b.cor = rivalAtual.cor; b.vel = rivalAtual.vel; });
+
+            golsUser = 0;
+            golsBot = 0;
+            tempoRestante = 90;
+            jogoAtivo = true;
+            document.getElementById("tempo").textContent = tempoRestante;
+            resetarPosicoes();
+            iniciarTimer();
+            tocarSom('apito');
+        }
+
+        function comprarSkin(skin, preco) {
+            if (skinsCompradas.includes(skin)) {
+                skinEquipada = skin;
+                localStorage.setItem('neon_skin', skinEquipada);
+                alert("Skin Equipada com sucesso!");
+            } else if (moedas >= preco) {
+                moedas -= preco;
+                skinsCompradas.push(skin);
+                skinEquipada = skin;
+                localStorage.setItem('neon_skins_list', JSON.stringify(skinsCompradas));
+                localStorage.setItem('neon_skin', skinEquipada);
+                atualizarMoedasHUD();
+                alert("Skin Comprada e Equipada!");
+            } else {
+                alert("Coins insuficientes!");
+            }
+        }
+
+        function resetarPosicoes() {
+            bola.x = MUNDO.largura / 2;
+            bola.y = MUNDO.altura / 2;
+            bola.velX = 0;
+            bola.velY = 0;
+            bola.posse = null;
+            timeUser.forEach((p, i) => { p.x = formacaoTime1[i].x; p.y = formacaoTime1[i].y; });
+            timeBot.forEach((p, i) => { p.x = formacaoTime2[i].x; p.y = formacaoTime2[i].y; });
+            jogadorControladoIdx = 9;
+        }
+
+        function selecionarJogadorMaisProximo() {
+            if (bola.posse && bola.posse.startsWith("user_")) return;
+
+            let menorDistancia = Infinity;
+            timeUser.forEach((p, idx) => {
+                const dist = Math.hypot(p.x - bola.x, p.y - bola.y);
+                if (dist < menorDistancia) {
+                    menorDistancia = dist;
+                    jogadorControladoIdx = idx;
+                }
+            });
+        }
+
+        function limitarNoCampo(entidade) {
+            entidade.x = Math.max(entidade.raio, Math.min(MUNDO.largura - entidade.raio, entidade.x));
+            entidade.y = Math.max(entidade.raio, Math.min(MUNDO.altura - entidade.raio, entidade.y));
+        }
+
+        function atualizar() {
+            if (!jogoAtivo) return;
+
+            selecionarJogadorMaisProximo();
+
+            const userPlayer = timeUser[jogadorControladoIdx];
+            if (userPlayer) {
+                if (joystickVector.x !== 0 || joystickVector.y !== 0) {
+                    userPlayer.x += joystickVector.x * userPlayer.vel;
+                    userPlayer.y += joystickVector.y * userPlayer.vel;
+
+                    const mag = Math.hypot(joystickVector.x, joystickVector.y);
+                    userPlayer.miraX = joystickVector.x / mag;
+                    userPlayer.miraY = joystickVector.y / mag;
+                }
+                limitarNoCampo(userPlayer);
+            }
+
+            // IA Inteligente
+            timeBot.forEach((bot, idx) => {
+                if (bot.cooldownChute > 0) bot.cooldownChute--;
+
+                let alvoX = formacaoTime2[idx].x;
+                let alvoY = formacaoTime2[idx].y;
+
+                if (bola.posse === bot.id) {
+                    const distGol = Math.hypot(0 - bot.x, (MUNDO.altura / 2) - bot.y);
+
+                    if (distGol < 550 && bot.cooldownChute === 0) {
+                        const anguloGol = Math.atan2((MUNDO.altura / 2) - bot.y, 0 - bot.x);
+                        bola.posse = null;
+                        bola.velX = Math.cos(anguloGol) * 17;
+                        bola.velY = Math.sin(anguloGol) * 17;
+                        bot.cooldownChute = 60;
+                        tocarSom('chute');
+                    } else {
+                        let ameacaPerto = timeUser.some(u => Math.hypot(u.x - bot.x, u.y - bot.y) < 110);
+                        if (ameacaPerto && bot.cooldownChute === 0) {
+                            let companheiroLivre = timeBot.find(b => b.id !== bot.id && b.x < bot.x);
+                            if (companheiroLivre) {
+                                const anguloPasse = Math.atan2(companheiroLivre.y - bot.y, companheiroLivre.x - bot.x);
+                                bola.posse = null;
+                                bola.velX = Math.cos(anguloPasse) * 13;
+                                bola.velY = Math.sin(anguloPasse) * 13;
+                                bot.cooldownChute = 60;
+                                tocarSom('chute');
+                            }
+                        } else {
+                            alvoX = 50;
+                            alvoY = MUNDO.altura / 2;
+                        }
+                    }
+                } else {
+                    let menorDistBot = Math.min(...timeBot.map(b => Math.hypot(b.x - bola.x, b.y - bola.y)));
+                    if (Math.hypot(bot.x - bola.x, bot.y - bola.y) === menorDistBot) {
+                        alvoX = bola.x;
+                        alvoY = bola.y;
+                    } else {
+                        alvoX = formacaoTime2[idx].x + (bola.x - MUNDO.largura / 2) * 0.3;
+                    }
+                }
+
+                const dx = alvoX - bot.x;
+                const dy = alvoY - bot.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > 5) {
+                    bot.x += (dx / dist) * bot.vel;
+                    bot.y += (dy / dist) * bot.vel;
+                    bot.miraX = dx / dist;
+                    bot.miraY = dy / dist;
+                }
+
+                limitarNoCampo(bot);
+            });
+
+            // Condução e Física
+            if (bola.posse) {
+                const dono = [...timeUser, ...timeBot].find(p => p.id === bola.posse);
+                if (dono) {
+                    bola.x = dono.x + dono.miraX * (dono.raio + 8);
+                    bola.y = dono.y + dono.miraY * (dono.raio + 8);
+                    bola.velX = 0;
+                    bola.velY = 0;
+
+                    limitarNoCampo(bola);
+
+                    const oponentes = bola.posse.startsWith("user_") ? timeBot : timeUser;
+                    oponentes.forEach(op => {
+                        if (Math.hypot(op.x - bola.x, op.y - bola.y) < op.raio + bola.raio + 4) {
+                            bola.posse = op.id;
+                        }
+                    });
+                }
+            } else {
+                bola.x += bola.velX;
+                bola.y += bola.velY;
+                bola.velX *= bola.atrito;
+                bola.velY *= bola.atrito;
+
+                [...timeUser, ...timeBot].forEach(p => {
+                    if (Math.hypot(p.x - bola.x, p.y - bola.y) < p.raio + bola.raio + 2) {
+                        bola.posse = p.id;
+                    }
+                });
+            }
+
+            // Gols e Traves
+            const traveCima = MUNDO.altura / 2 - 160;
+            const traveBaixo = MUNDO.altura / 2 + 160;
+
+            if (bola.y - bola.raio < 0 || bola.y + bola.raio > MUNDO.altura) {
+                bola.velY *= -1;
+                limitarNoCampo(bola);
+            }
+
+            if (bola.x - bola.raio < 0) {
+                if (bola.y > traveCima && bola.y < traveBaixo) {
+                    golsBot++;
+                    tocarSom('gol');
+                    resetarPosicoes();
+                } else {
+                    bola.velX *= -1;
+                    bola.x = bola.raio;
+                }
+            }
+
+            if (bola.x + bola.raio > MUNDO.largura) {
+                if (bola.y > traveCima && bola.y < traveBaixo) {
+                    golsUser++;
+                    tocarSom('gol');
+                    resetarPosicoes();
+                } else {
+                    bola.velX *= -1;
+                    bola.x = MUNDO.largura - bola.raio;
+                }
+            }
+
+            // Câmera
+            camera.x += ((bola.x - canvas.width / 2) - camera.x) * 0.1;
+            camera.y += ((bola.y - canvas.height / 2) - camera.y) * 0.1;
+            camera.x = Math.max(0, Math.min(MUNDO.largura - canvas.width, camera.x));
+            camera.y = Math.max(0, Math.min(MUNDO.altura - canvas.height, camera.y));
+
+            document.getElementById("placar-user").textContent = `VOCÊ ${golsUser}`;
+            document.getElementById("placar-bot").textContent = `${golsBot} BOT`;
+        }
+
+        // DESENHAR MINIMAPA/RADAR
+        function desenharRadar() {
+            ctxRadar.clearRect(0, 0, canvasRadar.width, canvasRadar.height);
+
+            const rx = canvasRadar.width / MUNDO.largura;
+            const ry = canvasRadar.height / MUNDO.altura;
+
+            ctxRadar.strokeStyle = "rgba(0, 255, 255, 0.4)";
+            ctxRadar.lineWidth = 1;
+            ctxRadar.beginPath();
+            ctxRadar.moveTo(canvasRadar.width / 2, 0);
+            ctxRadar.lineTo(canvasRadar.width / 2, canvasRadar.height);
+            ctxRadar.stroke();
+
+            timeUser.forEach(p => {
+                ctxRadar.fillStyle = "#00ffff";
+                ctxRadar.beginPath();
+                ctxRadar.arc(p.x * rx, p.y * ry, 2.5, 0, Math.PI * 2);
+                ctxRadar.fill();
+            });
+
+            timeBot.forEach(p => {
+                ctxRadar.fillStyle = p.cor;
+                ctxRadar.beginPath();
+                ctxRadar.arc(p.x * rx, p.y * ry, 2.5, 0, Math.PI * 2);
+                ctxRadar.fill();
+            });
+
+            ctxRadar.fillStyle = "#ffff00";
+            ctxRadar.beginPath();
+            ctxRadar.arc(bola.x * rx, bola.y * ry, 3.5, 0, Math.PI * 2);
+            ctxRadar.fill();
+        }
+
+        function desenhar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            // Relvado
+            const numFaixas = 20;
+            const larguraFaixa = MUNDO.largura / numFaixas;
+            for (let i = 0; i < numFaixas; i++) {
+                ctx.fillStyle = i % 2 === 0 ? "#11381b" : "#0d2e16";
+                ctx.fillRect(i * larguraFaixa, 0, larguraFaixa, MUNDO.altura);
+            }
+
+            // Linhas Neon
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = "rgba(0, 255, 255, 0.7)";
+            ctx.shadowColor = "#00ffff";
+            ctx.lineWidth = 4;
+
+            ctx.strokeRect(0, 0, MUNDO.largura, MUNDO.altura);
+            ctx.beginPath();
+            ctx.moveTo(MUNDO.largura / 2, 0);
+            ctx.lineTo(MUNDO.largura / 2, MUNDO.altura);
+            ctx.arc(MUNDO.largura / 2, MUNDO.altura / 2, 140, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeRect(0, MUNDO.altura / 2 - 300, 250, 600);
+            ctx.strokeRect(MUNDO.largura - 250, MUNDO.altura / 2 - 300, 250, 600);
+
+            // Balizas 3D
+            const traveCima = MUNDO.altura / 2 - 160;
+            const traveAltura = 320;
+            const profundidadeRede = 70;
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "rgba(0, 255, 255, 0.15)";
+            ctx.fillRect(-profundidadeRede, traveCima, profundidadeRede, traveAltura);
+
+            ctx.strokeStyle = "rgba(0, 255, 255, 0.4)";
+            ctx.lineWidth = 1.5;
+            for (let y = traveCima; y <= traveCima + traveAltura; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(-profundidadeRede, y);
+                ctx.lineTo(0, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = "#ffffff";
+            ctx.shadowColor = "#00ffff";
+            ctx.shadowBlur = 12;
+            ctx.lineWidth = 6;
+            ctx.strokeRect(0, traveCima, 8, traveAltura);
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "rgba(255, 0, 127, 0.15)";
+            ctx.fillRect(MUNDO.largura, traveCima, profundidadeRede, traveAltura);
+
+            ctx.strokeStyle = "rgba(255, 0, 127, 0.4)";
+            ctx.lineWidth = 1.5;
+            for (let y = traveCima; y <= traveCima + traveAltura; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(MUNDO.largura, y);
+                ctx.lineTo(MUNDO.largura + profundidadeRede, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = "#ffffff";
+            ctx.shadowColor = "#ff007f";
+            ctx.shadowBlur = 12;
+            ctx.lineWidth = 6;
+            ctx.strokeRect(MUNDO.largura - 8, traveCima, 8, traveAltura);
+
+            // Sombras 2.5D
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+            [...timeUser, ...timeBot, bola].forEach(obj => {
+                ctx.beginPath();
+                ctx.ellipse(obj.x + 3, obj.y + obj.raio + 2, obj.raio * 0.9, obj.raio * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Usuário
+            timeUser.forEach((p, idx) => {
+                const grad = ctx.createRadialGradient(p.x - 4, p.y - 4, 2, p.x, p.y, p.raio);
+                grad.addColorStop(0, "#ffffff");
+                grad.addColorStop(0.4, p.cor);
+                grad.addColorStop(1, "#0088aa");
+
+                ctx.fillStyle = grad;
+                ctx.shadowColor = p.cor;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.raio, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (idx === jogadorControladoIdx) {
+                    ctx.strokeStyle = "#ffff00";
+                    ctx.shadowColor = "#ffff00";
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.raio + 6, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = "rgba(0, 255, 255, 0.8)";
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 6]);
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x + p.miraX * 140, p.y + p.miraY * 140);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            });
+
+            // Bot
+            timeBot.forEach(p => {
+                const grad = ctx.createRadialGradient(p.x - 4, p.y - 4, 2, p.x, p.y, p.raio);
+                grad.addColorStop(0, "#ffffff");
+                grad.addColorStop(0.4, p.cor);
+                grad.addColorStop(1, "#440022");
+
+                ctx.fillStyle = grad;
+                ctx.shadowColor = p.cor;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.raio, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Bola com Skin
+            let corBolaVisual = bola.cor;
+            if (bola.cor === "#ffffff") {
+                if (skinEquipada === 'plasma') corBolaVisual = '#00ffcc';
+                else if (skinEquipada === 'fogo') corBolaVisual = '#ff3300';
+            }
+
+            const gradBola = ctx.createRadialGradient(bola.x - 3, bola.y - 3, 1, bola.x, bola.y, bola.raio);
+            gradBola.addColorStop(0, "#ffffff");
+            gradBola.addColorStop(0.5, corBolaVisual);
+            gradBola.addColorStop(1, "#444400");
+
+            ctx.fillStyle = gradBola;
+            ctx.shadowColor = corBolaVisual;
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(bola.x, bola.y, bola.raio, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            desenharRadar();
+        }
+
+        function loop() {
+            atualizar();
+            desenhar();
+            requestAnimationFrame(loop);
+        }
+
+        atualizarMoedasHUD();
+        loop();
+    </script>
+</body>
+</html>
